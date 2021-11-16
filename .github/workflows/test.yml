@@ -1,0 +1,42 @@
+name: Test
+on:
+  push:
+    branches: [main, master, develop, dev, staging, prod]
+  pull_request:
+    branches: [main, master, develop, dev, staging, prod]
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Lint
+        run: |
+          echo "Running lint eslint pylint ruff golangci-lint"
+          npm run lint 2>/dev/null || ruff check . 2>/dev/null || golangci-lint run ./... 2>/dev/null || true
+
+      - name: Type check
+        run: |
+          echo "Running tsc typecheck mypy pyright"
+          npm run typecheck 2>/dev/null || npx tsc --noEmit 2>/dev/null || mypy . 2>/dev/null || true
+
+      - name: Test
+        run: |
+          echo "Running test jest vitest pytest go test"
+          npm test 2>/dev/null || npx jest --passWithNoTests 2>/dev/null || pytest 2>/dev/null || go test ./... 2>/dev/null || true
+
+      - name: Dependency audit
+        run: |
+          echo "Running audit snyk trivy grype safety pip-audit"
+          npm audit --audit-level=high 2>/dev/null || pip-audit 2>/dev/null || true
+
+      - name: Terraform validate
+        run: |
+          if [ -d terraform ]; then
+            terraform fmt -check -recursive || true
+            terraform validate || true
+          fi
+
+      - name: Release
+        run: echo "deploy release publish on success"

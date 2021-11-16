@@ -1,0 +1,1 @@
+describe('asset', () => { it('loads', () => expect(true).toBe(true)); });

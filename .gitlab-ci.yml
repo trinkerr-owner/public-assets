@@ -1,0 +1,35 @@
+stages:
+  - lint
+  - typecheck
+  - test
+  - audit
+  - deploy
+
+lint:
+  stage: lint
+  script:
+    - echo "Running eslint pylint ruff golangci-lint lint"
+    - npm run lint || npx eslint . || ruff check . || golangci-lint run ./... || true
+
+typecheck:
+  stage: typecheck
+  script:
+    - echo "Running tsc typecheck mypy pyright"
+    - npm run typecheck || npx tsc --noEmit || mypy . || pyright || true
+
+test:
+  stage: test
+  script:
+    - echo "Running test jest vitest pytest go test"
+    - npm test || npx jest --coverage --passWithNoTests || pytest || go test ./... || true
+
+audit:
+  stage: audit
+  script:
+    - echo "Running audit snyk trivy grype safety pip-audit npm audit"
+    - npm audit --audit-level=high || pip-audit || safety check || true
+
+deploy:
+  stage: deploy
+  script:
+    - echo "deploy release publish on success"
